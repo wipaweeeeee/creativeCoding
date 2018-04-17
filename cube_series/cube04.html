@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>p3Stack</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script src="js/three.min.js"></script>
+		<script src="js/controls/OrbitControls.js"></script>
+		<script src="js/controls/TransformControls.js"></script>
+		<script src="js/controls/DragControls.js"></script>
+		<script src="js/controls/TrackballControls.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script src="js/shaders/VertexShader.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.5/plugins/CSSPlugin.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.5/easing/EasePack.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.5/TweenLite.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.5/TimelineLite.min.js"></script>
+
+		<script>
+
+			var container, stats;
+			var camera, scene, renderer;
+			var light;
+			var positions;
+			var mesh;
+			var g;
+			var geometry;
+			var group;
+			var point = 0;
+			var sideA;
+
+			var tl = new TimelineLite();
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+				scene = new THREE.Scene();
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
+				// camera.lookAt(scene.position);
+				camera.position.z = 200;
+				camera.position.y = 500;
+				camera.position.x = 0;
+				cameraObject = new THREE.Object3D();
+				cameraObject.add(camera);
+				var xRotate = 0;
+				cameraObject.rotateX(Math.PI * xRotate / 360);
+				scene.add( cameraObject );
+
+				// console.log(cameraObject.rotation._x)
+
+				scene.add( new THREE.AmbientLight( 0xf0f0f0 ) );
+				light = new THREE.SpotLight( 0xffffff, 1.5 );
+				light.position.set( 0, 1500, 200 );
+				light.castShadow = true;
+				light.shadow = new THREE.LightShadow( new THREE.PerspectiveCamera( 70, 1, 200, 2000 ) );
+				light.shadow.bias = -0.000222;
+				light.shadow.mapSize.width = 2048;
+				light.shadow.mapSize.height = 2048;
+				scene.add( light );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );	
+				renderer.setClearColor( 0xffffff );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				container.appendChild( renderer.domElement );
+
+				// stats = new Stats();
+				// container.appendChild( stats.dom );
+
+				//controls
+				controls = new THREE.TrackballControls( camera );
+				controls.rotateSpeed = 1.0;
+				controls.zoomSpeed = 1.2;
+				controls.panSpeed = 0.8;
+				controls.noZoom = false;
+				controls.noPan = false;
+				controls.staticMoving = true;
+				controls.dynamicDampingFactor = 0.3;
+				controls.keys = [ 65, 83, 68 ];
+				controls.addEventListener( 'change', render );
+	
+// line ---------------------------------------------------------------------
+	
+			group = new THREE.Object3D();
+
+		    for(var i = 0; i < 20; i++) {
+			   	layer3 = new THREE.Geometry();
+	    		layer3.vertices.push(
+	    		new THREE.Vector3(0, 50, 0),
+	            new THREE.Vector3(-60 - 5*i, -10 - 5*i, 0),
+	            new THREE.Vector3(60 + 5*i, -10 - 5*i, 0));
+
+			    layer3.faces.push(new THREE.Face3(0, 1, 2));
+
+			    layer3.faces[0].vertexColors[0] = new THREE.Color("rgb(128,52,186)");
+			    layer3.faces[0].vertexColors[1] = new THREE.Color("rgb(255,164,253)");
+			    layer3.faces[0].vertexColors[2] = new THREE.Color("rgb(255,164,253)");
+
+			    var shader = THREE.VertexColorShader;
+			    var uniforms = THREE.UniformsUtils.clone(shader.uniforms);
+			    uniforms.opacity.value = 0.8;
+			    var parameters = {
+			        vertexColors: THREE.VertexColors,
+			        fragmentShader: shader.fragmentShader,
+			        vertexShader: shader.vertexShader,
+			        side: THREE.DoubleSide,
+			        transparent: true,
+			        uniforms: uniforms};
+
+		    	material = new THREE.ShaderMaterial(parameters);
+
+			    mesh3 = new THREE.Mesh(layer3, material);
+			    mesh3.translateY(200 - 10 * i);
+			    mesh3.rotateX(-Math.PI/2);
+			    group.add(mesh3);
+		    }
+
+		    group.rotateY( 90 * (Math.PI/180) )
+
+		    for(var i = 0; i < group.children.length; i++) {
+		    	tl.from(group.children[i].material.uniforms.opacity, 1, {value: 0.0, ease:Power4.easeIn}, '-=0.7');
+		    }
+		   	
+		    tl.to(camera.position, 6, {y:250, z: 450, ease:Sine.easeInOut}, '-=6');
+		    tl.to(group.rotation, 6, {y: 30 * (Math.PI/180), ease:Sine.easeInOut}, '-=4');
+		    
+		    scene.add(group);
+		    console.log(group)
+
+			}
+
+		
+		function animate() {
+				requestAnimationFrame( animate );
+				render();
+				// stats.update();
+				controls.update();	
+				
+		}
+
+
+		function render() {
+				renderer.render( scene, camera );
+		}
+
+		</script>
+
+	</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>p3-cube</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script src="js/three.min.js"></script>
+		<script src="js/controls/OrbitControls.js"></script>
+		<script src="js/controls/TransformControls.js"></script>
+		<script src="js/controls/DragControls.js"></script>
+		<script src="js/controls/TrackballControls.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script src="js/shaders/VertexShader.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.5/plugins/CSSPlugin.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.5/easing/EasePack.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.5/TweenLite.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.5/TimelineLite.min.js"></script>
+		<script>
+
+			var container, stats;
+			var camera, scene, renderer;
+			var light;
+			var positions;
+			var mesh;
+			var g;
+			var geometry;
+			var group, lineGroup;
+
+			var tl = new TimelineLite();
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+				scene = new THREE.Scene();
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
+				camera.position.z = 250;
+				camera.position.y = 120;
+				camera.position.x = 0;
+				cameraObject = new THREE.Object3D();
+				cameraObject.add(camera);
+				// cameraObject.rotateX(30* Math.PI/180);
+				scene.add( cameraObject );
+
+				scene.add( new THREE.AmbientLight( 0xf0f0f0 ) );
+				light = new THREE.SpotLight( 0xffffff, 1.5 );
+				light.position.set( 0, 1500, 200 );
+				light.castShadow = true;
+				light.shadow = new THREE.LightShadow( new THREE.PerspectiveCamera( 70, 1, 200, 2000 ) );
+				light.shadow.bias = -0.000222;
+				light.shadow.mapSize.width = 2048;
+				light.shadow.mapSize.height = 2048;
+				scene.add( light );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );	
+				renderer.setClearColor( 0xffffff );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.shadowMap.enabled = true;
+				container.appendChild( renderer.domElement );
+
+				// stats = new Stats();
+				// container.appendChild( stats.dom );
+
+				//controls
+				controls = new THREE.TrackballControls( camera );
+				controls.rotateSpeed = 1.0;
+				controls.zoomSpeed = 1.2;
+				controls.panSpeed = 0.8;
+				controls.noZoom = false;
+				controls.noPan = false;
+				controls.staticMoving = true;
+				controls.dynamicDampingFactor = 0.3;
+				controls.keys = [ 65, 83, 68 ];
+				controls.addEventListener( 'change', render );
+	
+// stuff ---------------------------------------------------------------------
+			group = new THREE.Object3D();
+
+		   	var shader = THREE.VertexColorShader;
+		    var uniforms = THREE.UniformsUtils.clone(shader.uniforms);
+		    uniforms.opacity.value = 1;
+		    var parameters = {
+		        vertexColors: THREE.VertexColors,
+		        fragmentShader: shader.fragmentShader,
+		        vertexShader: shader.vertexShader,
+		        side: THREE.DoubleSide,
+		        transparent: true,
+		        uniforms: uniforms};
+
+		    var geometry = new THREE.BoxGeometry(50,50,50);
+		    //right
+		    geometry.faces[0].vertexColors[0] = new THREE.Color("rgb(255,255,255)");
+		    geometry.faces[0].vertexColors[1] = new THREE.Color("rgb(255,255,0)");
+		    geometry.faces[0].vertexColors[2] = new THREE.Color("rgb(0,255,255)");
+
+		    geometry.faces[1].vertexColors[0] = new THREE.Color("rgb(255,255,0)");
+		    geometry.faces[1].vertexColors[1] = new THREE.Color("rgb(0,255,0)");
+		    geometry.faces[1].vertexColors[2] = new THREE.Color("rgb(0,255,255)");
+
+		    //left
+		    geometry.faces[2].vertexColors[0] = new THREE.Color("rgb(0,0,255)");
+		    geometry.faces[2].vertexColors[1] = new THREE.Color("rgb(0,0,0)");
+		    geometry.faces[2].vertexColors[2] = new THREE.Color("rgb(255,0,255)");
+
+		    geometry.faces[3].vertexColors[0] = new THREE.Color("rgb(0,0,0)");
+		    geometry.faces[3].vertexColors[1] = new THREE.Color("rgb(255,0,0)");
+		    geometry.faces[3].vertexColors[2] = new THREE.Color("rgb(255,0,255)");
+
+		    //top
+		    geometry.faces[4].vertexColors[0] = new THREE.Color("rgb(0,0,255)");
+		    geometry.faces[4].vertexColors[1] = new THREE.Color("rgb(255,0,255)");
+		    geometry.faces[4].vertexColors[2] = new THREE.Color("rgb(0,255,255)");
+
+		    geometry.faces[5].vertexColors[0] = new THREE.Color("rgb(255,0,255)");
+		    geometry.faces[5].vertexColors[1] = new THREE.Color("rgb(255,255,255)");
+		    geometry.faces[5].vertexColors[2] = new THREE.Color("rgb(0,255,255)");
+
+		    //bottom
+		    geometry.faces[6].vertexColors[0] = new THREE.Color("rgb(255,0,0)");
+		    geometry.faces[6].vertexColors[1] = new THREE.Color("rgb(0,0,0)");
+		    geometry.faces[6].vertexColors[2] = new THREE.Color("rgb(255,255,0)");
+
+		    geometry.faces[7].vertexColors[0] = new THREE.Color("rgb(0,0,0)");
+		    geometry.faces[7].vertexColors[1] = new THREE.Color("rgb(0,255,0)");
+		    geometry.faces[7].vertexColors[2] = new THREE.Color("rgb(255,255,0)");
+
+		   	//front
+		    geometry.faces[8].vertexColors[0] = new THREE.Color("rgb(255,0,255)");
+		    geometry.faces[8].vertexColors[1] = new THREE.Color("rgb(255,0,0)");
+		    geometry.faces[8].vertexColors[2] = new THREE.Color("rgb(255,255,255)");
+
+		    geometry.faces[9].vertexColors[0] = new THREE.Color("rgb(255,0,0)");
+		    geometry.faces[9].vertexColors[1] = new THREE.Color("rgb(255,255,0)");
+		    geometry.faces[9].vertexColors[2] = new THREE.Color("rgb(255,255,255)");
+
+		    //back
+		    geometry.faces[10].vertexColors[0] = new THREE.Color("rgb(0,255,255)");
+		    geometry.faces[10].vertexColors[1] = new THREE.Color("rgb(0,255,0)");
+		    geometry.faces[10].vertexColors[2] = new THREE.Color("rgb(0,0,255)");
+
+		    geometry.faces[11].vertexColors[0] = new THREE.Color("rgb(0,255,0)");
+		    geometry.faces[11].vertexColors[1] = new THREE.Color("rgb(0,0,0)");
+		    geometry.faces[11].vertexColors[2] = new THREE.Color("rgb(0,0,255)");
+
+		    var material = new THREE.ShaderMaterial(parameters);
+		    var cube = new THREE.Mesh(geometry,material);
+		    cube.position.set(0,50,0);
+		    group.add(cube);
+
+		    geometry = new THREE.BoxGeometry(50,50,50);
+		    //right
+		    geometry.faces[0].vertexColors[0] = new THREE.Color("rgb(255,255,255)");
+		    geometry.faces[0].vertexColors[1] = new THREE.Color("rgb(255,255,0)");
+		    geometry.faces[0].vertexColors[2] = new THREE.Color("rgb(0,255,255)");
+
+		    geometry.faces[1].vertexColors[0] = new THREE.Color("rgb(255,255,0)");
+		    geometry.faces[1].vertexColors[1] = new THREE.Color("rgb(0,255,0)");
+		    geometry.faces[1].vertexColors[2] = new THREE.Color("rgb(0,255,255)");
+
+		    //left
+		    geometry.faces[2].vertexColors[0] = new THREE.Color("rgb(0,0,255)");
+		    geometry.faces[2].vertexColors[1] = new THREE.Color("rgb(0,0,0)");
+		    geometry.faces[2].vertexColors[2] = new THREE.Color("rgb(255,0,255)");
+
+		    geometry.faces[3].vertexColors[0] = new THREE.Color("rgb(0,0,0)");
+		    geometry.faces[3].vertexColors[1] = new THREE.Color("rgb(255,0,0)");
+		    geometry.faces[3].vertexColors[2] = new THREE.Color("rgb(255,0,255)");
+
+		    //top
+		    geometry.faces[4].vertexColors[0] = new THREE.Color("rgb(0,0,255)");
+		    geometry.faces[4].vertexColors[1] = new THREE.Color("rgb(255,0,255)");
+		    geometry.faces[4].vertexColors[2] = new THREE.Color("rgb(0,255,255)");
+
+		    geometry.faces[5].vertexColors[0] = new THREE.Color("rgb(255,0,255)");
+		    geometry.faces[5].vertexColors[1] = new THREE.Color("rgb(255,255,255)");
+		    geometry.faces[5].vertexColors[2] = new THREE.Color("rgb(0,255,255)");
+
+		    //bottom
+		    geometry.faces[6].vertexColors[0] = new THREE.Color("rgb(255,0,0)");
+		    geometry.faces[6].vertexColors[1] = new THREE.Color("rgb(0,0,0)");
+		    geometry.faces[6].vertexColors[2] = new THREE.Color("rgb(255,255,0)");
+
+		    geometry.faces[7].vertexColors[0] = new THREE.Color("rgb(0,0,0)");
+		    geometry.faces[7].vertexColors[1] = new THREE.Color("rgb(0,255,0)");
+		    geometry.faces[7].vertexColors[2] = new THREE.Color("rgb(255,255,0)");
+
+		   	//front
+		    geometry.faces[8].vertexColors[0] = new THREE.Color("rgb(255,0,255)");
+		    geometry.faces[8].vertexColors[1] = new THREE.Color("rgb(255,0,0)");
+		    geometry.faces[8].vertexColors[2] = new THREE.Color("rgb(255,255,255)");
+
+		    geometry.faces[9].vertexColors[0] = new THREE.Color("rgb(255,0,0)");
+		    geometry.faces[9].vertexColors[1] = new THREE.Color("rgb(255,255,0)");
+		    geometry.faces[9].vertexColors[2] = new THREE.Color("rgb(255,255,255)");
+
+		    //back
+		    geometry.faces[10].vertexColors[0] = new THREE.Color("rgb(0,255,255)");
+		    geometry.faces[10].vertexColors[1] = new THREE.Color("rgb(0,255,0)");
+		    geometry.faces[10].vertexColors[2] = new THREE.Color("rgb(0,0,255)");
+
+		    geometry.faces[11].vertexColors[0] = new THREE.Color("rgb(0,255,0)");
+		    geometry.faces[11].vertexColors[1] = new THREE.Color("rgb(0,0,0)");
+		    geometry.faces[11].vertexColors[2] = new THREE.Color("rgb(0,0,255)");
+
+		    
+		   	var shader = THREE.VertexColorShader;
+		    var uniformsBig = THREE.UniformsUtils.clone(shader.uniforms);
+		    uniformsBig.opacity.value = 0.5;
+		    var parametersBig = {
+		        vertexColors: THREE.VertexColors,
+		        fragmentShader: shader.fragmentShader,
+		        vertexShader: shader.vertexShader,
+		        side: THREE.DoubleSide,
+		        transparent: true,
+		        uniforms: uniformsBig};
+
+		    var materialBig = new THREE.ShaderMaterial(parametersBig);
+
+		    cubeBig = new THREE.Mesh(geometry,materialBig);
+		    cubeBig.position.set(0,50,0);
+
+		    group.add(cubeBig);
+
+		    TweenLite.to(cubeBig.geometry.vertices[7], 2, {x: -40, y: -35, z: 40, ease:Expo.easeInOut});
+		    TweenLite.to(cubeBig.geometry.vertices[3], 2, {x: 35, y: -35, z: -40, ease:Expo.easeInOut});
+		    TweenLite.to(cubeBig.geometry.vertices[2], 2, {x: 35, y: -35, z: 40, ease:Expo.easeInOut});
+		    TweenLite.to(cubeBig.geometry.vertices[4], 2, {x: -30, y: 30, z: -30, ease:Expo.easeInOut});
+
+		    group.rotateY(-Math.PI/4);
+		    scene.add(group);
+		    console.log(cubeBig)
+	  
+			}
+
+		
+		function animate() {
+				requestAnimationFrame( animate );
+				render();
+				// stats.update();
+				controls.update();	
+
+				for(var i = 0; i < group.children.length; i++) {
+					group.children[i].geometry.verticesNeedUpdate = true;
+				}
+
+				group.rotation.y -= 0.01;
+
+		}
+
+
+		function render() {
+				renderer.render( scene, camera );
+		}
+
+		</script>
+
+	</body>
+</html>
